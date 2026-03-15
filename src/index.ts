@@ -5,7 +5,7 @@ import { generate } from './generators/index.js';
 import chalk from 'chalk';
 
 try {
-  console.log('\n🔧 create-claude-config\n');
+  console.log('\n🔧 setup-claude-code\n');
 
   if (isClaudeAvailable()) {
     try {

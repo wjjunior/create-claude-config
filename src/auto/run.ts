@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
-import { readdirSync, statSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import { buildPrompt } from './prompt.js';
 import { checkExistingConfig } from '../utils/fs.js';
+import { generateUniversalFiles } from './universal.js';
 
 const TIMEOUT_MS = 5 * 60 * 1000;
 const SIGKILL_GRACE_MS = 5000;
@@ -18,10 +19,15 @@ export async function runAutoConfig(): Promise<void> {
     throw new CancelledError();
   }
 
-  const prompt = buildPrompt();
+  // Step 1: Generate universal files ourselves (hooks, universal skills, gitignore, memory)
+  console.log(chalk.dim('  Setting up universal files...'));
+  await generateUniversalFiles();
 
-  console.log(chalk.cyan('Claude Code detected. Analyzing project...\n'));
+  // Step 2: Use Claude Code only for project-specific files
+  const prompt = buildPrompt();
+  console.log(chalk.cyan('\n  Analyzing project with Claude Code...\n'));
   await spawnClaude(prompt);
+
   listGeneratedFiles();
 }
 
@@ -29,8 +35,8 @@ function spawnClaude(prompt: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn('claude', [
       '-p', '-',
-      '--allowedTools', 'Write,Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(head:*),Bash(chmod:*),Bash(mkdir:*),Bash(npm install:*),Bash(npm run:*),Bash(node:*)',
-      '--max-turns', '30',
+      '--allowedTools', 'Read,Write,Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(head:*),Bash(chmod:*),Bash(mkdir:*),Bash(npm install:*),Bash(npm run:*),Bash(node:*)',
+      '--max-turns', '50',
       '--output-format', 'text',
     ], {
       cwd: process.cwd(),
@@ -77,6 +83,7 @@ function listGeneratedFiles(): void {
 
   if (existsSync(join(cwd, '.claude'))) walk(join(cwd, '.claude'), '.claude');
   if (existsSync(join(cwd, 'CLAUDE.md'))) files.push('CLAUDE.md');
+  if (existsSync(join(cwd, 'memory'))) walk(join(cwd, 'memory'), 'memory');
 
   if (files.length > 0) {
     console.log(chalk.bold('\nGenerated files:'));
