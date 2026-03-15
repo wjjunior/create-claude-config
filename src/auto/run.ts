@@ -1,45 +1,48 @@
 import { spawn } from 'node:child_process';
-import { writeFileSync, unlinkSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import chalk from 'chalk';
 import { buildPrompt } from './prompt.js';
 import { checkExistingConfig } from '../utils/fs.js';
 
 const TIMEOUT_MS = 5 * 60 * 1000;
+const SIGKILL_GRACE_MS = 5000;
+
+export class CancelledError extends Error {
+  constructor() { super('Cancelled'); }
+}
 
 export async function runAutoConfig(): Promise<void> {
   const proceed = await checkExistingConfig();
   if (!proceed) {
-    console.log('Cancelled.');
-    process.exit(0);
+    throw new CancelledError();
   }
 
   const prompt = buildPrompt();
-  const tmpFile = join(tmpdir(), `claude-config-prompt-${Date.now()}.txt`);
 
-  try {
-    writeFileSync(tmpFile, prompt, 'utf-8');
-    console.log(chalk.cyan('Claude Code detected. Analyzing project...\n'));
-    await spawnClaude(tmpFile);
-    listGeneratedFiles();
-  } finally {
-    try { unlinkSync(tmpFile); } catch {}
-  }
+  console.log(chalk.cyan('Claude Code detected. Analyzing project...\n'));
+  await spawnClaude(prompt);
+  listGeneratedFiles();
 }
 
-function spawnClaude(promptFile: string): Promise<void> {
+function spawnClaude(prompt: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn('bash', [
-      '-c',
-      `claude -p "$(cat '${promptFile}')" --allowedTools "Write,Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(head:*),Bash(chmod:*),Bash(mkdir:*),Bash(npm:*),Bash(node:*)" --max-turns 30 --output-format text`,
+    const child = spawn('claude', [
+      '-p', '-',
+      '--allowedTools', 'Write,Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(head:*),Bash(chmod:*),Bash(mkdir:*),Bash(npm install:*),Bash(npm run:*),Bash(node:*)',
+      '--max-turns', '30',
+      '--output-format', 'text',
     ], {
       cwd: process.cwd(),
-      stdio: 'inherit',
+      stdio: ['pipe', 'inherit', 'inherit'],
     });
+
+    child.stdin.write(prompt);
+    child.stdin.end();
 
     const timer = setTimeout(() => {
       child.kill('SIGTERM');
+      setTimeout(() => child.kill('SIGKILL'), SIGKILL_GRACE_MS);
       reject(new Error('Claude Code timed out after 5 minutes'));
     }, TIMEOUT_MS);
 
@@ -72,16 +75,8 @@ function listGeneratedFiles(): void {
     } catch {}
   }
 
-  const claudeDir = join(cwd, '.claude');
-  try {
-    statSync(claudeDir);
-    walk(claudeDir, '.claude');
-  } catch {}
-
-  try {
-    statSync(join(cwd, 'CLAUDE.md'));
-    files.push('CLAUDE.md');
-  } catch {}
+  if (existsSync(join(cwd, '.claude'))) walk(join(cwd, '.claude'), '.claude');
+  if (existsSync(join(cwd, 'CLAUDE.md'))) files.push('CLAUDE.md');
 
   if (files.length > 0) {
     console.log(chalk.bold('\nGenerated files:'));
