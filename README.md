@@ -1,14 +1,14 @@
-# create-claude-config
+# setup-claude-code
 
 Interactive CLI that scaffolds [Claude Code](https://claude.ai/claude-code) project configuration for any tech stack. Generates `.claude/` directory, `CLAUDE.md`, hooks, skills, and an optional MCP context server — all customized to your project.
 
 ## Quick Start
 
 ```bash
-npx create-claude-config
+npx setup-claude-code
 ```
 
-Answer ~8 questions about your project and get a complete Claude Code configuration in seconds.
+If Claude Code CLI is installed, it auto-analyzes your project and generates config with zero questions. Otherwise, falls back to an interactive wizard (~8 questions).
 
 ## Supported Stacks
 

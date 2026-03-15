@@ -1,9 +1,9 @@
 {
-  "name": "create-claude-config",
+  "name": "setup-claude-code",
   "version": "0.1.0",
   "description": "Interactive CLI to scaffold Claude Code project configuration for any tech stack",
   "bin": {
-    "create-claude-config": "./bin/cli.js"
+    "setup-claude-code": "./bin/cli.js"
   },
   "main": "dist/index.js",
   "type": "module",
