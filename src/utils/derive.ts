@@ -38,34 +38,32 @@ function deriveLanguages(config: Pick<ProjectConfig, 'backend' | 'backendLanguag
   return langs;
 }
 
+const BACKEND_MONOREPO_NAMES = ['backend', 'server', 'api'] as const;
+const FRONTEND_MONOREPO_PATHS = ['ui/src', 'client/src', 'frontend/src'] as const;
+
+function getBackendSourceDirs(config: Pick<ProjectConfig, 'backend' | 'frontend'>, isMonorepo: boolean): string[] {
+  if (config.backend === 'none') return [];
+  if (isMonorepo) {
+    const cwd = process.cwd();
+    const found = BACKEND_MONOREPO_NAMES.find(d => fs.existsSync(path.join(cwd, d)));
+    return found ? [found] : [];
+  }
+  if (config.backend === 'java') return ['src/main/java'];
+  if (config.backend === 'ruby') return ['app', 'lib'];
+  return ['src'];
+}
+
+function getFrontendSourceDirs(config: Pick<ProjectConfig, 'backend' | 'frontend'>, isMonorepo: boolean): string[] {
+  if (config.frontend === 'none') return [];
+  if (isMonorepo) {
+    const cwd = process.cwd();
+    const found = FRONTEND_MONOREPO_PATHS.find(d => fs.existsSync(path.join(cwd, d)));
+    return found ? [found] : [];
+  }
+  return config.backend === 'none' ? ['src'] : [];
+}
+
 function deriveSourceDirs(config: Pick<ProjectConfig, 'backend' | 'frontend'>, isMonorepo: boolean): string[] {
-  const dirs: string[] = [];
-
-  if (config.backend !== 'none') {
-    if (isMonorepo) {
-      const cwd = process.cwd();
-      if (fs.existsSync(path.join(cwd, 'backend'))) dirs.push('backend');
-      else if (fs.existsSync(path.join(cwd, 'server'))) dirs.push('server');
-      else if (fs.existsSync(path.join(cwd, 'api'))) dirs.push('api');
-    } else if (config.backend === 'java') {
-      dirs.push('src/main/java');
-    } else if (config.backend === 'ruby') {
-      dirs.push('app', 'lib');
-    } else {
-      dirs.push('src');
-    }
-  }
-
-  if (config.frontend !== 'none') {
-    if (isMonorepo) {
-      const cwd = process.cwd();
-      if (fs.existsSync(path.join(cwd, 'ui/src'))) dirs.push('ui/src');
-      else if (fs.existsSync(path.join(cwd, 'client/src'))) dirs.push('client/src');
-      else if (fs.existsSync(path.join(cwd, 'frontend/src'))) dirs.push('frontend/src');
-    } else if (config.backend === 'none') {
-      dirs.push('src');
-    }
-  }
-
+  const dirs = [...getBackendSourceDirs(config, isMonorepo), ...getFrontendSourceDirs(config, isMonorepo)];
   return dirs.length > 0 ? dirs : ['.'];
 }
