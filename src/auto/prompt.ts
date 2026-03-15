@@ -120,13 +120,14 @@ Generate a comprehensive CLAUDE.md with these sections. EVERY section must refle
 
 1. **# <project-name> — Claude Code Configuration**
 2. **## IDENTITY** — "You are a developer working on <name>, <description>." + bullet list of detected stack (backend, frontend, database, tests)
-3. **## MANDATORY ROUTING TABLE** — table:
+3. **## MANDATORY ROUTING TABLE** — use EXACTLY these skill names (they match the file names in .claude/skills/):
    | When the user asks for... | First action |
    |---|---|
    | Any code change | Invoke safe-dev-workflow skill |
    | Bug or error | Invoke systematic-debugging skill |
    | Code review | Invoke code-review skill |
    | Commit or PR | Invoke commit-and-pr skill |
+   IMPORTANT: The skill names MUST be exactly: safe-dev-workflow, systematic-debugging, code-review, commit-and-pr. Do NOT use any other names.
 4. **## DECISION RULES** — these 4 universal rules:
    - Architectural decision → write to memory/decisions/YYYY-MM-DD.md BEFORE responding
    - "I'll remember"/"I've noted" → write to memory NOW

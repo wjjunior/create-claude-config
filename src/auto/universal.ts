@@ -204,14 +204,15 @@ const WAKEUP_MD = `# Wake-Up Context
 `;
 
 const GITIGNORE_ENTRIES = `
-# Claude Code
+# Claude Code (local/generated — do not commit)
 .claude/settings.local.json
 .claude/.setup-manifest.json
 .claude/context.db
 .claude/mcp-servers/*/node_modules/
 .claude/mcp-servers/*/dist/
+.claude/mcp-servers/*/package-lock.json
 
-# Memory (local session data)
+# Memory (local session data — do not commit)
 memory/
 `;
 
