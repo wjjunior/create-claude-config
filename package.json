@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "claude:index": "cd .claude/mcp-servers/context-server && npm run build && npm run index"
   },
   "keywords": [
     "claude",
