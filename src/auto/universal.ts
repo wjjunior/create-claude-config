@@ -206,6 +206,7 @@ const WAKEUP_MD = `# Wake-Up Context
 const GITIGNORE_ENTRIES = `
 # Claude Code
 .claude/settings.local.json
+.claude/.setup-manifest.json
 .claude/context.db
 .claude/mcp-servers/*/node_modules/
 .claude/mcp-servers/*/dist/

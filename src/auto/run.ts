@@ -7,6 +7,7 @@ import { buildPrompt } from './prompt.js';
 import { checkExistingConfig } from '../utils/fs.js';
 import { generateUniversalFiles } from './universal.js';
 import { generateMcpServer } from '../generators/mcp-server.js';
+import { readManifest, writeManifest, isNewerVersion, getPackageVersion } from './manifest.js';
 import type { ProjectConfig } from '../types.js';
 
 const TIMEOUT_MS = 5 * 60 * 1000;
@@ -16,46 +17,103 @@ export class CancelledError extends Error {
   constructor() { super('Cancelled'); }
 }
 
+function buildMcpConfig(): ProjectConfig {
+  return {
+    projectName: '',
+    description: '',
+    backend: 'nodejs',
+    frontend: 'none',
+    database: 'none',
+    testFramework: '',
+    includeMcp: true,
+    hooks: { startup: true, sessionEnd: true, promiseChecker: true },
+    isMonorepo: false,
+    languages: ['typescript', 'javascript', 'python', 'go', 'ruby', 'java'],
+    sourceDirs: ['.'],
+  };
+}
+
 export async function runAutoConfig(): Promise<void> {
-  const proceed = await checkExistingConfig();
-  if (!proceed) {
-    throw new CancelledError();
+  const manifest = readManifest();
+
+  // Re-run: manifest exists
+  if (manifest) {
+    return handleRerun(manifest);
   }
 
-  // Ask about MCP server before starting
+  // First run
+  return handleFirstRun();
+}
+
+async function handleFirstRun(): Promise<void> {
+  const proceed = await checkExistingConfig();
+  if (!proceed) throw new CancelledError();
+
   const includeMcp = await confirm({
     message: 'Include MCP context server? (symbol indexing for codebase navigation)',
     default: true,
   });
 
-  // Step 1: Generate universal files ourselves (hooks, universal skills, gitignore, memory)
   console.log(chalk.dim('\n  Setting up universal files...'));
   await generateUniversalFiles();
 
-  // Step 2: Generate MCP server if requested (all parsers included)
   if (includeMcp) {
     console.log(chalk.dim('  Setting up MCP context server...'));
-    const mcpConfig: ProjectConfig = {
-      projectName: '',
-      description: '',
-      backend: 'nodejs',
-      frontend: 'none',
-      database: 'none',
-      testFramework: '',
-      includeMcp: true,
-      hooks: { startup: true, sessionEnd: true, promiseChecker: true },
-      isMonorepo: false,
-      languages: ['typescript', 'javascript', 'python', 'go', 'ruby', 'java'],
-      sourceDirs: ['.'],
-    };
-    await generateMcpServer(mcpConfig);
+    await generateMcpServer(buildMcpConfig());
   }
 
-  // Step 3: Use Claude Code only for project-specific files
   const prompt = buildPrompt(includeMcp);
   console.log(chalk.cyan('\n  Analyzing project with Claude Code...\n'));
   await spawnClaude(prompt);
 
+  writeManifest(includeMcp);
+  listGeneratedFiles();
+}
+
+async function handleRerun(manifest: { version: string; mcpEnabled: boolean }): Promise<void> {
+  const currentVersion = getPackageVersion();
+  const needsUpdate = isNewerVersion(manifest.version);
+
+  if (needsUpdate) {
+    console.log(chalk.cyan(`  Updating from v${manifest.version} to v${currentVersion}\n`));
+  } else {
+    console.log(chalk.dim(`  Config is up to date (v${manifest.version}).`));
+    const reanalyze = await confirm({
+      message: 'Re-analyze project and regenerate project-specific files?',
+      default: false,
+    });
+    if (!reanalyze) {
+      console.log(chalk.dim('  Nothing to do.'));
+      return;
+    }
+  }
+
+  // Always update universal files on re-run (handles version upgrades)
+  console.log(chalk.dim('  Updating universal files...'));
+  await generateUniversalFiles();
+
+  // MCP: keep existing state or ask if not present
+  let includeMcp = manifest.mcpEnabled;
+  const mcpExists = existsSync(join(process.cwd(), '.claude', 'mcp-servers', 'context-server'));
+
+  if (!mcpExists && !includeMcp) {
+    includeMcp = await confirm({
+      message: 'Include MCP context server? (symbol indexing for codebase navigation)',
+      default: true,
+    });
+  }
+
+  if (includeMcp && !mcpExists) {
+    console.log(chalk.dim('  Setting up MCP context server...'));
+    await generateMcpServer(buildMcpConfig());
+  }
+
+  // Regenerate project-specific files
+  const prompt = buildPrompt(includeMcp);
+  console.log(chalk.cyan('\n  Re-analyzing project with Claude Code...\n'));
+  await spawnClaude(prompt);
+
+  writeManifest(includeMcp);
   listGeneratedFiles();
 }
 
