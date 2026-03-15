@@ -1,3 +1,13 @@
 node_modules/
 dist/
 *.tgz
+
+
+# Claude Code
+.claude/settings.local.json
+.claude/context.db
+.claude/mcp-servers/*/node_modules/
+.claude/mcp-servers/*/dist/
+
+# Memory (local session data)
+memory/
