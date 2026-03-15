@@ -1,10 +1,13 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import chalk from 'chalk';
+import { confirm } from '@inquirer/prompts';
 import { buildPrompt } from './prompt.js';
 import { checkExistingConfig } from '../utils/fs.js';
 import { generateUniversalFiles } from './universal.js';
+import { generateMcpServer } from '../generators/mcp-server.js';
+import type { ProjectConfig } from '../types.js';
 
 const TIMEOUT_MS = 5 * 60 * 1000;
 const SIGKILL_GRACE_MS = 5000;
@@ -19,12 +22,37 @@ export async function runAutoConfig(): Promise<void> {
     throw new CancelledError();
   }
 
+  // Ask about MCP server before starting
+  const includeMcp = await confirm({
+    message: 'Include MCP context server? (symbol indexing for codebase navigation)',
+    default: true,
+  });
+
   // Step 1: Generate universal files ourselves (hooks, universal skills, gitignore, memory)
-  console.log(chalk.dim('  Setting up universal files...'));
+  console.log(chalk.dim('\n  Setting up universal files...'));
   await generateUniversalFiles();
 
-  // Step 2: Use Claude Code only for project-specific files
-  const prompt = buildPrompt();
+  // Step 2: Generate MCP server if requested (all parsers included)
+  if (includeMcp) {
+    console.log(chalk.dim('  Setting up MCP context server...'));
+    const mcpConfig: ProjectConfig = {
+      projectName: '',
+      description: '',
+      backend: 'nodejs',
+      frontend: 'none',
+      database: 'none',
+      testFramework: '',
+      includeMcp: true,
+      hooks: { startup: true, sessionEnd: true, promiseChecker: true },
+      isMonorepo: false,
+      languages: ['typescript', 'javascript', 'python', 'go', 'ruby', 'java'],
+      sourceDirs: ['.'],
+    };
+    await generateMcpServer(mcpConfig);
+  }
+
+  // Step 3: Use Claude Code only for project-specific files
+  const prompt = buildPrompt(includeMcp);
   console.log(chalk.cyan('\n  Analyzing project with Claude Code...\n'));
   await spawnClaude(prompt);
 

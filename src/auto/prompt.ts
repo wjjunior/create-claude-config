@@ -1,6 +1,10 @@
-export function buildPrompt(): string {
+export function buildPrompt(includeMcp: boolean): string {
+  const mcpNote = includeMcp
+    ? 'An MCP context server has been set up at .claude/mcp-servers/context-server/. Include the mcpServers config in settings.json and the MCP CONTEXT USAGE section in CLAUDE.md.'
+    : 'No MCP context server was requested. Do NOT include mcpServers in settings.json or MCP sections in CLAUDE.md.';
+
   return `
-You are setting up Claude Code configuration for THIS project. The universal files (hooks, universal skills, memory directory, .gitignore) have already been generated. Your job is to analyze the project and generate the PROJECT-SPECIFIC files only.
+You are setting up Claude Code configuration for THIS project. The universal files (hooks, universal skills, memory directory, .gitignore) have already been generated. ${includeMcp ? 'An MCP context server has also been generated.' : ''} Your job is to analyze the project and generate the PROJECT-SPECIFIC files only.
 
 ## Step 1: Analyze the project
 
@@ -67,7 +71,7 @@ Generate with this exact structure:
   }
 }
 
-Only include mcpServers if Node.js is available on the system. Only include permissions for tools actually used in the project. Output valid JSON (no comments).
+${includeMcp ? 'Include the mcpServers block exactly as shown above.' : 'Do NOT include the mcpServers block.'} Only include permissions for tools actually used in the project. Output valid JSON (no comments).
 
 ### File 2: .claude/skills/safe-dev-workflow.md
 
@@ -135,10 +139,10 @@ Generate a comprehensive CLAUDE.md with these sections. EVERY section must refle
 9. **## COMMON COMMANDS** — REAL dev/test/lint/build commands
 10. **## NAMING CONVENTIONS** — table based on observed patterns
 11. **## ENVIRONMENT VARIABLES** — from .env.example or detected config (placeholders only, never real secrets)
-12. **## MCP CONTEXT USAGE** (if MCP server will be available) — include:
+${includeMcp ? `12. **## MCP CONTEXT USAGE** — include:
     - get_symbol_context(symbolName)
     - add_observation(symbolName, "insight")
-    - get_project_summary()
+    - get_project_summary()` : '(No MCP section — MCP server was not requested)'}
 
 ## CRITICAL RULES
 
