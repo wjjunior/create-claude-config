@@ -81,51 +81,58 @@ interface QualityGate {
   command: string;
 }
 
-function getQualityGates(config: ProjectConfig): QualityGate[] {
-  const gates: QualityGate[] = [];
-
+function getBackendGates(config: ProjectConfig): QualityGate[] {
   switch (config.backend) {
-    case 'nodejs':
-      if (config.backendLanguage === 'typescript') {
-        gates.push({ name: 'TypeScript check', command: 'npx tsc --noEmit' });
-      }
-      gates.push({ name: 'Tests', command: 'npm test' });
-      gates.push({ name: 'Lint', command: 'npm run lint' });
-      break;
+    case 'nodejs': {
+      const ts = config.backendLanguage === 'typescript'
+        ? [{ name: 'TypeScript check', command: 'npx tsc --noEmit' }]
+        : [];
+      return [...ts, { name: 'Tests', command: 'npm test' }, { name: 'Lint', command: 'npm run lint' }];
+    }
     case 'python':
-      gates.push({ name: 'Type check', command: 'mypy .' });
-      gates.push({ name: 'Tests', command: 'pytest' });
-      gates.push({ name: 'Lint', command: 'ruff check .' });
-      break;
+      return [
+        { name: 'Type check', command: 'mypy .' },
+        { name: 'Tests', command: 'pytest' },
+        { name: 'Lint', command: 'ruff check .' },
+      ];
     case 'go':
-      gates.push({ name: 'Vet', command: 'go vet ./...' });
-      gates.push({ name: 'Tests', command: 'go test ./...' });
-      break;
+      return [
+        { name: 'Vet', command: 'go vet ./...' },
+        { name: 'Tests', command: 'go test ./...' },
+      ];
     case 'ruby':
-      gates.push({ name: 'Tests', command: 'bundle exec rspec' });
-      gates.push({ name: 'Lint', command: 'bundle exec rubocop' });
-      break;
+      return [
+        { name: 'Tests', command: 'bundle exec rspec' },
+        { name: 'Lint', command: 'bundle exec rubocop' },
+      ];
     case 'java':
-      if (config.javaBuildTool === 'gradle') {
-        gates.push({ name: 'Build + Tests', command: './gradlew build' });
-        gates.push({ name: 'Lint', command: './gradlew check' });
-      } else {
-        gates.push({ name: 'Build + Tests', command: './mvnw verify' });
-        gates.push({ name: 'Lint', command: './mvnw checkstyle:check' });
-      }
-      break;
+      return config.javaBuildTool === 'gradle'
+        ? [
+            { name: 'Build + Tests', command: './gradlew build' },
+            { name: 'Lint', command: './gradlew check' },
+          ]
+        : [
+            { name: 'Build + Tests', command: './mvnw verify' },
+            { name: 'Lint', command: './mvnw checkstyle:check' },
+          ];
+    default:
+      return [];
   }
+}
 
-  // Frontend gates
-  if (config.frontend !== 'none') {
-    const prefix = config.isMonorepo ? 'cd ui && ' : '';
-    gates.push({ name: 'Frontend TypeScript check', command: `${prefix}npx tsc --noEmit` });
-    gates.push({ name: 'Frontend tests', command: `${prefix}npm test` });
-    gates.push({ name: 'Frontend lint', command: `${prefix}npm run lint` });
-    gates.push({ name: 'Frontend build', command: `${prefix}npm run build` });
-  }
+function getFrontendGates(config: ProjectConfig): QualityGate[] {
+  if (config.frontend === 'none') return [];
+  const prefix = config.isMonorepo ? 'cd ui && ' : '';
+  return [
+    { name: 'Frontend TypeScript check', command: `${prefix}npx tsc --noEmit` },
+    { name: 'Frontend tests', command: `${prefix}npm test` },
+    { name: 'Frontend lint', command: `${prefix}npm run lint` },
+    { name: 'Frontend build', command: `${prefix}npm run build` },
+  ];
+}
 
-  return gates;
+function getQualityGates(config: ProjectConfig): QualityGate[] {
+  return [...getBackendGates(config), ...getFrontendGates(config)];
 }
 
 function buildSafeDevWorkflow(config: ProjectConfig): string {

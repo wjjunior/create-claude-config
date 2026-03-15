@@ -30,21 +30,15 @@ function formatStack(config: ProjectConfig): string {
 }
 
 function countFiles(config: ProjectConfig): string {
-  const lines: string[] = [];
-  lines.push('.claude/settings.json');
-
   const hookCount = [config.hooks.startup, config.hooks.sessionEnd, config.hooks.promiseChecker].filter(Boolean).length;
-  if (hookCount > 0) lines.push(`.claude/hooks/ (${hookCount} files)`);
-
-  lines.push('.claude/skills/ (4 files)');
-
-  if (config.includeMcp) {
-    lines.push('.claude/mcp-servers/context-server/ (5 files)');
-  }
-
-  lines.push('CLAUDE.md');
-  lines.push('.gitignore (append)');
-
+  const lines: string[] = [
+    '.claude/settings.json',
+    ...(hookCount > 0 ? [`.claude/hooks/ (${hookCount} files)`] : []),
+    '.claude/skills/ (4 files)',
+    ...(config.includeMcp ? ['.claude/mcp-servers/context-server/ (5 files)'] : []),
+    'CLAUDE.md',
+    '.gitignore (append)',
+  ];
   return lines.map((l, i) => `${i < lines.length - 1 ? '├──' : '└──'} ${l}`).join('\n   ');
 }
 

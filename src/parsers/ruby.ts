@@ -5,19 +5,19 @@ export const rubyParser: ParserDef = {
   extensions: ['.rb'],
   patterns: [
     {
-      regex: '\\bdef\\s+(\\w+)',
+      regex: String.raw`\bdef\s+(\w+)`,
       type: 'function',
       nameGroup: 1,
       signaturePrefix: 'def',
     },
     {
-      regex: '\\bclass\\s+([A-Z]\\w*)',
+      regex: String.raw`\bclass\s+([A-Z]\w*)`,
       type: 'class',
       nameGroup: 1,
       signaturePrefix: 'class',
     },
     {
-      regex: '\\bmodule\\s+([A-Z]\\w*)',
+      regex: String.raw`\bmodule\s+([A-Z]\w*)`,
       type: 'module',
       nameGroup: 1,
       signaturePrefix: 'module',

@@ -5,25 +5,25 @@ export const goParser: ParserDef = {
   extensions: ['.go'],
   patterns: [
     {
-      regex: 'func\\s+\\(\\w+\\s+\\*?\\w+\\)\\s+([A-Z]\\w*)\\s*\\(',
+      regex: String.raw`func\s+\(\w+\s+\*?\w+\)\s+([A-Z]\w*)\s*\(`,
       type: 'function',
       nameGroup: 1,
       signaturePrefix: 'method',
     },
     {
-      regex: 'func\\s+([A-Z]\\w*)\\s*\\(',
+      regex: String.raw`func\s+([A-Z]\w*)\s*\(`,
       type: 'function',
       nameGroup: 1,
       signaturePrefix: 'func',
     },
     {
-      regex: 'type\\s+([A-Z]\\w*)\\s+struct',
+      regex: String.raw`type\s+([A-Z]\w*)\s+struct`,
       type: 'class',
       nameGroup: 1,
       signaturePrefix: 'type struct',
     },
     {
-      regex: 'type\\s+([A-Z]\\w*)\\s+interface',
+      regex: String.raw`type\s+([A-Z]\w*)\s+interface`,
       type: 'interface',
       nameGroup: 1,
       signaturePrefix: 'type interface',
