@@ -17,6 +17,7 @@ function generatePackageJson(config: ProjectConfig): string {
     dependencies: {
       '@modelcontextprotocol/sdk': '^1.27.1',
       'better-sqlite3': '^12.8.0',
+      'zod': '^3.23.0',
     },
     devDependencies: {
       '@types/better-sqlite3': '^7.6.13',

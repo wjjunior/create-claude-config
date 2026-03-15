@@ -118,10 +118,11 @@ function getQualityGates(config: ProjectConfig): QualityGate[] {
 
   // Frontend gates
   if (config.frontend !== 'none') {
-    gates.push({ name: 'Frontend TypeScript check', command: 'cd ui && npx tsc --noEmit' });
-    gates.push({ name: 'Frontend tests', command: 'cd ui && npm test' });
-    gates.push({ name: 'Frontend lint', command: 'cd ui && npm run lint' });
-    gates.push({ name: 'Frontend build', command: 'cd ui && npm run build' });
+    const prefix = config.isMonorepo ? 'cd ui && ' : '';
+    gates.push({ name: 'Frontend TypeScript check', command: `${prefix}npx tsc --noEmit` });
+    gates.push({ name: 'Frontend tests', command: `${prefix}npm test` });
+    gates.push({ name: 'Frontend lint', command: `${prefix}npm run lint` });
+    gates.push({ name: 'Frontend build', command: `${prefix}npm run build` });
   }
 
   return gates;

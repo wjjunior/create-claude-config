@@ -17,13 +17,13 @@ export const goParser: ParserDef = {
       signaturePrefix: 'func',
     },
     {
-      regex: 'type\\s+(\\w+)\\s+struct',
+      regex: 'type\\s+([A-Z]\\w*)\\s+struct',
       type: 'class',
       nameGroup: 1,
       signaturePrefix: 'type struct',
     },
     {
-      regex: 'type\\s+(\\w+)\\s+interface',
+      regex: 'type\\s+([A-Z]\\w*)\\s+interface',
       type: 'interface',
       nameGroup: 1,
       signaturePrefix: 'type interface',

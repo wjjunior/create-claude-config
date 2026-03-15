@@ -78,22 +78,22 @@ function sectionDecisionRules(): string {
 function sectionProjectRules(config: ProjectConfig): string {
   const rules: string[] = [];
 
-  if (config.backend === 'nodejs' && config.backendFramework === 'Express') {
+  if (config.backend === 'nodejs' && config.backendFramework === 'express') {
     rules.push('**Service layer is mandatory** — ALL business logic lives in services/. Controllers handle HTTP only (parse request → call service → send response).');
     rules.push('**Use database transactions** for any operation touching multiple tables.');
     if (config.frontend !== 'none') {
       rules.push('**React Query for ALL server state** — Redux is ONLY for auth state and cross-component UI state. Never store API data in Redux.');
       rules.push('**Custom hooks for data fetching** — every `useQuery`/`useMutation` must be wrapped in a custom hook, never called inline in components.');
     }
-  } else if (config.backend === 'nodejs' && config.backendFramework === 'NestJS') {
+  } else if (config.backend === 'nodejs' && config.backendFramework === 'nestjs') {
     rules.push('**Use dependency injection** — let NestJS manage service lifetimes. Never manually instantiate services.');
     rules.push('**Thin controllers** — controllers handle HTTP concerns only. All business logic belongs in services.');
     rules.push('**Services for business logic** — encapsulate domain logic in injectable service classes.');
-  } else if (config.backend === 'python' && config.backendFramework === 'Django') {
+  } else if (config.backend === 'python' && config.backendFramework === 'django') {
     rules.push('**Fat models, thin views** — business logic belongs in models and managers, not in views.');
     rules.push('**Use Django ORM managers** — encapsulate common queries in custom managers.');
     rules.push('**Signals for side effects** — use Django signals for cross-cutting concerns, not inline logic in views.');
-  } else if (config.backend === 'python' && config.backendFramework === 'FastAPI') {
+  } else if (config.backend === 'python' && config.backendFramework === 'fastapi') {
     rules.push('**Pydantic models for validation** — all request/response schemas use Pydantic models.');
     rules.push('**Dependency injection** — use FastAPI `Depends()` for shared logic (auth, DB sessions, etc.).');
     rules.push('**Async by default** — use `async def` for route handlers and service methods.');
@@ -101,11 +101,11 @@ function sectionProjectRules(config: ProjectConfig): string {
     rules.push('**Accept interfaces, return structs** — depend on behavior, not concrete types.');
     rules.push('**Error wrapping with %w** — always wrap errors with `fmt.Errorf("context: %w", err)` for stack traces.');
     rules.push('**Context propagation** — pass `context.Context` as the first parameter to all functions that do I/O.');
-  } else if (config.backend === 'ruby' && config.backendFramework === 'Rails') {
+  } else if (config.backend === 'ruby' && config.backendFramework === 'rails') {
     rules.push('**Convention over configuration** — follow Rails conventions for naming, file placement, and routing.');
     rules.push('**Concerns for shared behavior** — extract shared model/controller logic into concerns.');
     rules.push('**Service objects for complex logic** — operations involving multiple models belong in app/services/.');
-  } else if (config.backend === 'java' && config.backendFramework === 'Spring Boot') {
+  } else if (config.backend === 'java' && config.backendFramework === 'spring-boot') {
     rules.push('**Constructor injection** — always use constructor injection, never field injection with `@Autowired`.');
     rules.push('**@Transactional on service layer** — annotate service methods, not controllers or repositories.');
     rules.push('**DTOs for API boundaries** — never expose JPA entities directly in API responses.');
@@ -253,7 +253,7 @@ function sectionFileStructure(config: ProjectConfig): string {
 │       ├── store/          # State management
 │       ├── types/          # TypeScript interfaces
 │       └── utils/          # Pure helper functions`;
-  } else if (config.backend === 'nodejs' && config.backendFramework === 'NestJS') {
+  } else if (config.backend === 'nodejs' && config.backendFramework === 'nestjs') {
     tree = `src/
 ├── modules/
 │   └── <feature>/
@@ -278,7 +278,7 @@ function sectionFileStructure(config: ProjectConfig): string {
 ├── routes/             # Route definitions
 ├── utils/              # Shared helpers
 └── config/             # Environment config`;
-  } else if (config.backend === 'python' && config.backendFramework === 'Django') {
+  } else if (config.backend === 'python' && config.backendFramework === 'django') {
     tree = `project/
 ├── settings.py
 ├── urls.py
@@ -295,7 +295,7 @@ app/
 └── tests/
     ├── test_models.py
     └── test_views.py`;
-  } else if (config.backend === 'python' && config.backendFramework === 'FastAPI') {
+  } else if (config.backend === 'python' && config.backendFramework === 'fastapi') {
     tree = `app/
 ├── main.py             # FastAPI app + router includes
 ├── api/
@@ -321,7 +321,7 @@ internal/
 ├── model/              # Domain types
 ├── middleware/          # HTTP middleware
 └── config/             # Configuration`;
-  } else if (config.backend === 'ruby' && config.backendFramework === 'Rails') {
+  } else if (config.backend === 'ruby' && config.backendFramework === 'rails') {
     tree = `app/
 ├── controllers/        # Thin controllers
 ├── models/             # Fat models
@@ -339,7 +339,7 @@ db/
 └── migrate/            # Migrations (append-only)
 
 spec/                   # RSpec tests`;
-  } else if (config.backend === 'java' && config.backendFramework === 'Spring Boot') {
+  } else if (config.backend === 'java' && config.backendFramework === 'spring-boot') {
     tree = `src/main/java/com/example/
 ├── controller/         # REST controllers
 ├── service/            # Business logic (@Service)
@@ -407,7 +407,7 @@ function sectionCommonCommands(config: ProjectConfig): string {
       'npm run lint             # Lint check',
       'npm test                 # Run tests',
     );
-  } else if (config.backend === 'python' && config.backendFramework === 'Django') {
+  } else if (config.backend === 'python' && config.backendFramework === 'django') {
     commands.push(
       'python manage.py runserver          # Start dev server',
       'python manage.py migrate            # Run migrations',
@@ -416,7 +416,7 @@ function sectionCommonCommands(config: ProjectConfig): string {
       'mypy .                              # Type check',
       'ruff check .                        # Lint',
     );
-  } else if (config.backend === 'python' && config.backendFramework === 'FastAPI') {
+  } else if (config.backend === 'python' && config.backendFramework === 'fastapi') {
     commands.push(
       'uvicorn app.main:app --reload       # Start dev server',
       'alembic upgrade head                # Run migrations',
@@ -439,7 +439,7 @@ function sectionCommonCommands(config: ProjectConfig): string {
       'golangci-lint run                   # Lint',
       'go build ./...                      # Build',
     );
-  } else if (config.backend === 'ruby' && config.backendFramework === 'Rails') {
+  } else if (config.backend === 'ruby' && config.backendFramework === 'rails') {
     commands.push(
       'bin/rails server                    # Start dev server',
       'bin/rails db:migrate                # Run migrations',
@@ -535,10 +535,24 @@ function sectionEnvironmentVariables(config: ProjectConfig): string {
     vars.push('DATABASE_PATH=./data/app.sqlite');
   }
 
-  if (config.backend !== 'none') {
+  if (config.backend === 'nodejs') {
     vars.push('JWT_SECRET=your-secret-key');
     vars.push('PORT=3000');
     vars.push('NODE_ENV=development');
+  } else if (config.backend === 'python') {
+    vars.push('PYTHONPATH=.');
+    vars.push('SECRET_KEY=your-secret-key');
+    if (config.backendFramework === 'django') {
+      vars.push('DJANGO_SETTINGS_MODULE=config.settings');
+    }
+  } else if (config.backend === 'go') {
+    vars.push('PORT=8080');
+  } else if (config.backend === 'ruby') {
+    vars.push('RAILS_ENV=development');
+    vars.push('SECRET_KEY_BASE=your-secret-key');
+  } else if (config.backend === 'java') {
+    vars.push('SPRING_PROFILES_ACTIVE=dev');
+    vars.push('SERVER_PORT=8080');
   }
 
   if (config.frontend !== 'none') {
